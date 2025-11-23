@@ -1,0 +1,33 @@
+.PHONY: test lint typecheck run pre-commit proto-gen fix-grpc-autogen
+PROTO_DIR := proto
+GEN_DIR := gen
+PROTO_FILES := $(shell find $(PROTO_DIR) -name '*.proto')
+
+help:
+	@echo "Доступные команды:"
+	@echo "  make install      - Установить все зависимости"
+	@echo "  make test         - Запустить тесты pytest"
+	@echo "  make run          - Запустить тесты pytest"
+	@echo "  make lint         - Запустить линтер ruff"
+	@echo "  make typecheck    - Запустить проверку типов mypy"
+	@echo "  make pre-commit   - Запустить все проверки (lint, typecheck, test)"
+
+install:
+	uv sync
+
+run:
+	uv run main.py
+
+test:
+	uv run pytest -v ./test/
+
+lint:
+	uv run ruff check .
+
+typecheck:
+	uv run mypy .
+
+fix-grpc-autogen:
+	./fix_grpc_autogen.sh $(GEN_DIR) $(GEN_DIR)
+
+pre-commit: lint typecheck test

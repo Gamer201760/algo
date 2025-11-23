@@ -52,3 +52,10 @@ ignore = ["W191", "E501", "PLR2004", "PLR0913"]
 exclude = ["list"]
 quote-style = "single"
 
+[dependency-groups]
+dev = [
+    "mypy>=1.18.2",
+    "pytest>=9.0.1",
+    "ruff>=0.14.6",
+]
+
