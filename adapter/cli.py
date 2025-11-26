@@ -2,7 +2,6 @@ from typing import (
     Annotated,
     Any,
     Callable,
-    TypeVar,
 )
 
 import questionary
@@ -10,15 +9,12 @@ from questionary import Choice, Separator, Style
 
 from domain.structures.stack import MinStack
 from pkg.annotools import (
-    IntValidator,
-    MinValue,
     Register,
     ValidationError,
     extract_validators,
     iter_parameters,
 )
-
-T = TypeVar('T')
+from pkg.annotools.validation import MinValue, StrLen, TypeValidator, Validator
 
 r = Register()
 
@@ -27,22 +23,22 @@ def build_kwargs(func: Callable[..., Any]) -> dict[str, Any]:
     kwargs: dict[str, Any] = {}
 
     for info in iter_parameters(func):
+        print(info)
         # scalar int
-        if info.origin is None and info.base_type is int:
-            validators = extract_validators(info.metadata, IntValidator)
+        if info.base_type is int:
+            validators = extract_validators(info.metadata)
             kwargs[info.name] = ask_int(f'{info.name} =', validators=validators)
             continue
 
-        # list[int]
-        if info.origin is list and len(info.args) == 1 and info.args[0] is int:
-            # здесь можно при желании тоже дергать extract_validators и
-            # применять валидаторы к каждому элементу списка
-            kwargs[info.name] = ask_array(int)
+        # list[T]
+        if info.base_type is list:
+            if len(info.args) == 0:
+                raise TypeError('У списка должен быть аннотирован тип')
+            kwargs[info.name] = ask_array(info.args[0])
             continue
 
         # фоллбек
         kwargs[info.name] = questionary.text(f'{info.name} =', style=custom_style).ask()
-
     return kwargs
 
 
@@ -66,38 +62,60 @@ custom_style = Style(
 # ---------------- Вопросы ----------------
 
 
+def validator_factory(validators: list[Validator] | None = None):
+    validators = validators or []
+
+    def _validate(
+        text: str,
+    ) -> str | bool:
+        for v in validators:
+            try:
+                v.validate(text)
+            except ValidationError as e:
+                return str(e)
+        return True
+
+    return _validate
+
+
+def _validate(
+    text: str,
+    validators: list[Validator] | None = None,
+) -> str | bool:
+    validators = validators or []
+    for v in validators:
+        try:
+            v.validate(text)
+        except ValidationError as e:
+            return str(e)
+    return True
+
+
+class ZNumValidator:
+    def validate(self, value: str) -> None:
+        if not value or not value.lstrip('-').isdigit():
+            raise ValidationError('Нужно целое число')
+
+
 def ask_int(
     message: str,
     *,
-    validators: list[IntValidator] | None = None,
+    validators: list[Validator] | None = None,
 ) -> int:
-    validators = validators or []
-
-    def _validate(text: str) -> bool | str:
-        text = text.strip()
-        if not text or not text.lstrip('-').isdigit():
-            return 'Нужно целое число'
-
-        value = int(text)
-
-        for v in validators:
-            try:
-                v.validate(value)
-            except ValidationError as e:
-                return str(e)
-
-        return True
-
-    raw = questionary.text(message, validate=_validate, style=custom_style).ask()
+    raw = questionary.text(
+        message, validate=validator_factory(validators), style=custom_style
+    ).ask()
     return int(raw)
 
 
-def ask_array(parser: Callable[[str], T], *, default_sample: bool = True) -> list[T]:
+def ask_array[T](parser: Callable[[str], T], *, default_sample: bool = True) -> list[T]:
     use_default = questionary.confirm(
         'Использовать тестовый массив [1, 3, -1, 2, -8, 7, 3, 5]?',
         default=default_sample,
         style=custom_style,
     ).ask()
+
+    _validate('', [StrLen(10)])
 
     if use_default:
         sample = [1, 3, -1, 2, -8, 7, 3, 5]
@@ -117,41 +135,53 @@ def ask_array(parser: Callable[[str], T], *, default_sample: bool = True) -> lis
 
 
 @r
-def fib(n: Annotated[int, MinValue(0)]) -> int:
-    """Итеративный Fibonacci."""
-    a, b = 0, 1
-    for _ in range(n):
-        a, b = b, a + b
-    return a
+def list_test_int(n: list[int]) -> int:
+    """Тест листа int"""
+    return 10
 
 
 @r
-def fibrec(n: Annotated[int, MinValue(0)]) -> int:
-    """Рекурсивный Fibonacci."""
-    if n <= 1:
-        return n
-    return fibrec(n - 1) + fibrec(n - 2)
+def list_test_empty(n: list) -> int:
+    """Тест листа empty"""
+    return 10
 
 
 @r
-def factorial(n: Annotated[int, MinValue(0)]) -> int:
-    """Итеративный факториал."""
-    res = 1
-    for i in range(2, n + 1):
-        res *= i
-    return res
+def list_test_str(n: list[str]) -> int:
+    """Тест листа str"""
+    print(n)
+    return 10
 
 
 @r
-def factorialrec(n: Annotated[int, MinValue(0)]) -> int:
-    """Рекурсивный факториал."""
-    if n <= 1:
-        return 1
-    return n * factorialrec(n - 1)
+def list_str(n: str) -> int:
+    """str"""
+    return 10
+
+
+@r
+def list_int(n: int) -> int:
+    """int"""
+    return 10
+
+
+@r
+def list_int_anno(
+    n: Annotated[int, ZNumValidator(), TypeValidator(int), MinValue(10)],
+) -> int:
+    """anno int"""
+    return 10
+
+
+@r
+def list_float(n: float) -> int:
+    """float"""
+    return 10
 
 
 @r
 def stack():
+    """Стэк"""
     s = MinStack()
     while True:
         choice = questionary.select(
@@ -198,7 +228,6 @@ def main() -> None:
         ).ask()
 
         if choice in ('exit', None):
-            questionary.print('Пока!', style='bold fg:ansigreen')
             break
 
         func = r.funcs[choice]
@@ -210,6 +239,11 @@ def main() -> None:
         except (ValueError, IndexError) as e:
             questionary.print('Error: ' + str(e), style='bold fg:red')
 
+    questionary.print('Пока!', style='bold fg:ansigreen')
+
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        ...

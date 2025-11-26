@@ -6,33 +6,23 @@ from typing import (
     Iterable,
     List,
     Sequence,
-    Type,
     TypeVar,
     get_args,
     get_origin,
     get_type_hints,
 )
 
+from pkg.annotools.validation import Validator
+
 V = TypeVar('V')
 
 
 @dataclass(frozen=True)
 class ParamInfo:
-    """
-    name: имя параметра
-    base_type: тип без Annotated (int, list[int], ...)
-    origin: origin из typing.get_origin(base_type) (list, dict, Union, ...)
-    args: args из typing.get_args(base_type) (для list[int] -> (int,))
-    metadata: список метаданных из Annotated (MinValue, MaxValue, ...)
-    param: inspect.Parameter
-    """
-
     name: str
-    base_type: Any
-    origin: Any | None
-    args: tuple[Any, ...]
-    metadata: List[Any]
-    param: inspect.Parameter
+    base_type: Any  # list, dict, int, str, MyClass, ...
+    args: tuple[Any, ...]  # параметры generic (для list[int] -> (int,))
+    metadata: List[Validator]
 
 
 def _split_annotated(annotated_type: Any) -> tuple[Any, List[Any]]:
@@ -45,30 +35,30 @@ def _split_annotated(annotated_type: Any) -> tuple[Any, List[Any]]:
 
 def iter_parameters(func: Any) -> Iterable[ParamInfo]:
     """
-    Итератор по параметрам функции с учётом Annotated
+    Итератор по параметрам функции с учётом Annotated.
+    base_type/args уже нормализованы (origin + args)
     """
     hints = get_type_hints(func, include_extras=True)
     sig = inspect.signature(func)
 
-    for name, param in sig.parameters.items():
+    for name in sig.parameters.keys():
         if name not in hints:
             continue
 
-        annotated_type = hints[name]
-        base_type, metadata = _split_annotated(annotated_type)
+        base_type, metadata = _split_annotated(hints[name])
 
         origin = get_origin(base_type)
         args = get_args(base_type)
+        if origin is not None:
+            base_type = origin
 
         yield ParamInfo(
             name=name,
             base_type=base_type,
-            origin=origin,
             args=args,
             metadata=metadata,
-            param=param,
         )
 
 
-def extract_validators(meta: Sequence[Any], validator_cls: Type[V]) -> List[V]:
-    return [m for m in meta if isinstance(m, validator_cls)]
+def extract_validators(meta: Sequence[Any]) -> list[Validator]:
+    return [m for m in meta if isinstance(m, Validator)]
