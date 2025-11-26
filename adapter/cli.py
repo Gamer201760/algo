@@ -8,6 +8,7 @@ from typing import (
 import questionary
 from questionary import Choice, Separator, Style
 
+from domain.structures.stack import MinStack
 from pkg.annotools import (
     IntValidator,
     MinValue,
@@ -22,7 +23,7 @@ T = TypeVar('T')
 r = Register()
 
 
-def build_kwargs_for(func: Callable[..., Any]) -> dict[str, Any]:
+def build_kwargs(func: Callable[..., Any]) -> dict[str, Any]:
     kwargs: dict[str, Any] = {}
 
     for info in iter_parameters(func):
@@ -149,6 +150,38 @@ def factorialrec(n: Annotated[int, MinValue(0)]) -> int:
     return n * factorialrec(n - 1)
 
 
+@r
+def stack():
+    s = MinStack()
+    while True:
+        choice = questionary.select(
+            'Выберите',
+            choices=[
+                Choice('Push', 'push'),
+                Choice('Pop', 'pop'),
+                Choice('Peek', 'peek'),
+                Choice('Min', 'min'),
+                Separator(),
+                Choice('Назад', 'back'),
+            ],
+            style=custom_style,
+        ).ask()
+        if choice == 'push':
+            s.push(ask_int('Введите элемент'))
+        elif choice == 'pop':
+            questionary.print(str(s.pop()))
+        elif choice == 'peek':
+            questionary.print(str(s.peek()))
+        elif choice == 'min':
+            questionary.print(str(s.min()))
+
+        questionary.print(
+            '[' + ', '.join(map(str, s.list())) + '], MIN: ' + str(s.min())
+        )
+        if choice in ('back', None):
+            break
+
+
 # ---------------- CLI ----------------
 
 
@@ -169,9 +202,13 @@ def main() -> None:
             break
 
         func = r.funcs[choice]
-        kwargs = build_kwargs_for(func)
-        result = func(**kwargs)
-        questionary.print(f'Результат: {result}', style='bold fg:ansiyellow')
+        kwargs = build_kwargs(func)
+        try:
+            result = func(**kwargs)
+            if result:
+                questionary.print(f'Результат: {result}', style='bold fg:ansiyellow')
+        except (ValueError, IndexError) as e:
+            questionary.print('Error: ' + str(e), style='bold fg:red')
 
 
 if __name__ == '__main__':
