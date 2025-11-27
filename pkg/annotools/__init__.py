@@ -1,10 +1,14 @@
-from .annotations import ParamInfo, extract_validators, iter_parameters
-from .registry import Register
+from .annotations import (
+    ParamInfo,
+    extract_annotaded,
+    extract_validators,
+    iter_parameters,
+)
 from .validation import MaxValue, MinValue, ValidationError
 
 __all__ = [
-    'Register',
     'ValidationError',
+    'extract_annotaded',
     'MinValue',
     'MaxValue',
     'ParamInfo',

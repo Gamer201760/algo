@@ -2,6 +2,7 @@ from typing import (
     Annotated,
     Any,
     Callable,
+    Dict,
 )
 
 import questionary
@@ -9,12 +10,28 @@ from questionary import Choice, Separator, Style
 
 from domain.structures.stack import MinStack
 from pkg.annotools import (
-    Register,
     ValidationError,
     extract_validators,
     iter_parameters,
 )
-from pkg.annotools.validation import MinValue, StrLen, TypeValidator, Validator
+from pkg.annotools.annotations import extract_annotaded
+from pkg.annotools.validation import MinValue, TypeValidator, Validator
+
+
+class Register:
+    """Простой реестр функций по имени"""
+
+    def __init__(self) -> None:
+        self._funcs: Dict[str, Callable] = {}
+
+    def __call__(self, func: Callable) -> Callable:
+        self._funcs[func.__name__] = func
+        return func
+
+    @property
+    def funcs(self) -> Dict[str, Callable]:
+        return self._funcs.copy()
+
 
 r = Register()
 
@@ -32,9 +49,10 @@ def build_kwargs(func: Callable[..., Any]) -> dict[str, Any]:
 
         # list[T]
         if info.base_type is list:
-            if len(info.args) == 0:
-                raise TypeError('У списка должен быть аннотирован тип')
-            kwargs[info.name] = ask_array(info.args[0])
+            if len(info.args) != 1:
+                raise TypeError('У списка должен ровно один аннотированый тип')
+            btype, meta = extract_annotaded(info.args[0])
+            kwargs[info.name] = ask_array(btype, validators=extract_validators(meta))
             continue
 
         # фоллбек
@@ -62,6 +80,23 @@ custom_style = Style(
 # ---------------- Вопросы ----------------
 
 
+def validator_token_factory(validators: list[Validator] | None = None):
+    validators = validators or []
+
+    def _validate(
+        text: str,
+    ) -> str | bool:
+        token = text.split(', ')[-1]
+        for v in validators:
+            try:
+                v.validate(token)
+            except ValidationError as e:
+                return str(e)
+        return True
+
+    return _validate
+
+
 def validator_factory(validators: list[Validator] | None = None):
     validators = validators or []
 
@@ -76,19 +111,6 @@ def validator_factory(validators: list[Validator] | None = None):
         return True
 
     return _validate
-
-
-def _validate(
-    text: str,
-    validators: list[Validator] | None = None,
-) -> str | bool:
-    validators = validators or []
-    for v in validators:
-        try:
-            v.validate(text)
-        except ValidationError as e:
-            return str(e)
-    return True
 
 
 class ZNumValidator:
@@ -108,14 +130,16 @@ def ask_int(
     return int(raw)
 
 
-def ask_array[T](parser: Callable[[str], T], *, default_sample: bool = True) -> list[T]:
+def ask_array[T](
+    parser: Callable[[str], T],
+    *,
+    validators: list[Validator] | None = None,
+) -> list[T]:
     use_default = questionary.confirm(
         'Использовать тестовый массив [1, 3, -1, 2, -8, 7, 3, 5]?',
-        default=default_sample,
+        default=True,
         style=custom_style,
     ).ask()
-
-    _validate('', [StrLen(10)])
 
     if use_default:
         sample = [1, 3, -1, 2, -8, 7, 3, 5]
@@ -125,9 +149,10 @@ def ask_array[T](parser: Callable[[str], T], *, default_sample: bool = True) -> 
         'Введите массив через пробел или запятую:',
         instruction='Например: 1 3 -1 2 8 7 3 5',
         style=custom_style,
+        validate=validator_token_factory(validators),
     ).ask()
 
-    tokens = raw.replace(',', ' ').split()
+    tokens = raw.split(', ')
     return [parser(t) for t in tokens]
 
 
@@ -167,10 +192,10 @@ def list_int(n: int) -> int:
 
 @r
 def list_int_anno(
-    n: Annotated[int, ZNumValidator(), TypeValidator(int), MinValue(10)],
-) -> int:
+    n: list[Annotated[int, ZNumValidator(), TypeValidator(int), MinValue(10)]],
+) -> list:
     """anno int"""
-    return 10
+    return n
 
 
 @r

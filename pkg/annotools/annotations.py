@@ -22,7 +22,7 @@ class ParamInfo:
     name: str
     base_type: Any  # list, dict, int, str, MyClass, ...
     args: tuple[Any, ...]  # параметры generic (для list[int] -> (int,))
-    metadata: List[Validator]
+    metadata: List[Any]
 
 
 def _split_annotated(annotated_type: Any) -> tuple[Any, List[Any]]:
@@ -31,6 +31,21 @@ def _split_annotated(annotated_type: Any) -> tuple[Any, List[Any]]:
         base_type, *meta = get_args(annotated_type)
         return base_type, list(meta)
     return annotated_type, []
+
+
+def extract_annotaded(t: Any) -> tuple[Any, list]:
+    base_type, metadata = _split_annotated(t)
+
+    origin = get_origin(base_type)
+    # args = get_args(base_type)
+    if origin is not None:
+        base_type = origin
+    return (
+        # name=name,
+        base_type,
+        # args=args,
+        metadata,
+    )
 
 
 def iter_parameters(func: Any) -> Iterable[ParamInfo]:
