@@ -1,7 +1,8 @@
 from functools import cmp_to_key
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
-from _typeshed import SupportsAllComparisons
+if TYPE_CHECKING:
+    from _typeshed import SupportsAllComparisons
 
 
 def quick_sort[T: SupportsAllComparisons](
