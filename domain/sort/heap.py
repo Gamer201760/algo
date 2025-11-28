@@ -1,8 +1,10 @@
 from functools import cmp_to_key
 from typing import Any, Callable
 
+from _typeshed import SupportsAllComparisons
 
-def heap_sort[T](
+
+def heap_sort[T: SupportsAllComparisons](
     a: list[T],
     *,
     key: Callable[[T], Any] | None = None,

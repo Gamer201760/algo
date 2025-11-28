@@ -17,14 +17,6 @@ from .conftest import (
     reverse_sorted,
 )
 
-INT_SORTS = [
-    bubble_sort,
-    quick_sort,
-    heap_sort,
-    counting_sort,
-    radix_sort,
-]
-
 
 @pytest.mark.parametrize(
     'data',
@@ -40,7 +32,16 @@ def test_bucket_sort_valid(data):
     assert result == sorted(data)
 
 
-@pytest.mark.parametrize('sort_fn', INT_SORTS)
+@pytest.mark.parametrize(
+    'sort_fn',
+    [
+        bubble_sort,
+        quick_sort,
+        heap_sort,
+        counting_sort,
+        radix_sort,
+    ],
+)
 @pytest.mark.parametrize(
     'data',
     [

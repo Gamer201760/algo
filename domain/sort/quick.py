@@ -1,8 +1,10 @@
 from functools import cmp_to_key
 from typing import Any, Callable
 
+from _typeshed import SupportsAllComparisons
 
-def quick_sort[T](
+
+def quick_sort[T: SupportsAllComparisons](
     a: list[T],
     *,
     key: Callable[[T], Any] | None = None,

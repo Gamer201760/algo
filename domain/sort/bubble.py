@@ -1,21 +1,25 @@
 from functools import cmp_to_key
 from typing import Any, Callable
 
+from _typeshed import SupportsAllComparisons
 
-def bubble_sort[T](
+
+def bubble_sort[T: SupportsAllComparisons](
     a: list[T],
     *,
     key: Callable[[T], Any] | None = None,
     cmp: Callable[[T, T], int] | None = None,
 ) -> list[T]:
     # проверяем что не переданы обе функции сразу
+
     if cmp is not None:
         if key is not None:
-            raise ValueError('Используйте или key, или cmp')
+            raise ValueError('Используйте или key или cmp')
         key_func = cmp_to_key(cmp)
     else:
         key_func = key or (lambda x: x)
 
+    # создаем копию списка чтобы не менять входные данные
     result = list(a)
     n = len(result)
 

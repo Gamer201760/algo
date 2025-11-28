@@ -10,11 +10,16 @@ def counting_sort[T](
     if not a:
         return []
 
-    # подготавливаем функцию ключа
-    key_func = key or (lambda x: x)
-
-    # вычисляем ключи
-    keys = [key_func(x) for x in a]
+    if key is None:
+        # ветка без key предполагаем что T это int
+        keys: list[int] = []
+        for x in a:
+            if not isinstance(x, int):
+                raise TypeError('counting_sort без key поддерживает только list[int]')
+            keys.append(x)
+    else:
+        # ветка с key сразу используем key
+        keys = [key(x) for x in a]
 
     # находим минимум и максимум ключа
     min_key = min(keys)
