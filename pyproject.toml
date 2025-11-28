@@ -58,6 +58,7 @@ quote-style = "single"
 dev = [
     "mypy>=1.18.2",
     "pytest>=9.0.1",
+    "pytest-benchmark>=5.2.3",
     "ruff>=0.14.6",
 ]
 
