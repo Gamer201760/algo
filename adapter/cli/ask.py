@@ -7,15 +7,16 @@ from adapter.cli.validator import validator_factory, validator_token_factory
 from pkg.annotools.validation import Validator
 
 
-def ask_int(
+def ask[T](
     message: str,
+    parser: Callable[[str], T],
     *,
     validators: list[Validator] | None = None,
-) -> int:
+) -> T:
     raw = questionary.text(
         message, validate=validator_factory(validators), style=STYLE
-    ).ask()
-    return int(raw)
+    ).unsafe_ask()
+    return parser(raw)
 
 
 def ask_array[T](
@@ -38,7 +39,7 @@ def ask_array[T](
         instruction='Например: 1 3 -1 2 8 7 3 5',
         style=STYLE,
         validate=validator_token_factory(validators),
-    ).ask()
+    ).unsafe_ask()
 
     tokens = raw.split(', ')
     return [parser(t) for t in tokens]

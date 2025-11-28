@@ -8,7 +8,7 @@ from typing import (
 import questionary
 from questionary import Choice, Separator
 
-from adapter.cli.ask import ask_array, ask_int
+from adapter.cli.ask import ask, ask_array
 from adapter.cli.style import STYLE
 from adapter.cli.validator import ZNumValidator
 from domain.structures.stack import MinStack
@@ -42,13 +42,6 @@ def build_kwargs(func: Callable[..., Any]) -> dict[str, Any]:
     kwargs: dict[str, Any] = {}
 
     for info in iter_parameters(func):
-        print(info)
-        # scalar int
-        if info.base_type is int:
-            validators = extract_validators(info.metadata)
-            kwargs[info.name] = ask_int(f'{info.name} =', validators=validators)
-            continue
-
         # list[T]
         if info.base_type is list:
             if len(info.args) != 1:
@@ -57,24 +50,24 @@ def build_kwargs(func: Callable[..., Any]) -> dict[str, Any]:
             kwargs[info.name] = ask_array(btype, validators=extract_validators(meta))
             continue
 
-        # фоллбек
-        kwargs[info.name] = questionary.text(f'{info.name} =', style=STYLE).ask()
+        if info.base_type not in (int, float, str, bool):
+            raise TypeError(f'{info.base_type.__name__} не поддерживается парсером')
+        validators = extract_validators(info.metadata)
+        kwargs[info.name] = ask(f'{info.name} =', info.base_type, validators=validators)
+
     return kwargs
-
-
-# ---------------- Стиль questionary ----------------
-
-
-# ---------------- Вопросы ----------------
-
-
-# ---------------- Алгоритмы ----------------
 
 
 @r
 def list_test_int(n: list[int]) -> int:
     """Тест листа int"""
     return 10
+
+
+@r
+def list_test_float(n: list[float]):
+    """Тест листа float"""
+    return n
 
 
 @r
@@ -111,9 +104,15 @@ def list_int_anno(
 
 
 @r
-def list_float(n: float) -> int:
+def list_float(n: float):
     """float"""
-    return 10
+    return n
+
+
+@r
+def list_dict(n: dict):
+    """dict"""
+    return n
 
 
 @r
@@ -132,9 +131,9 @@ def stack():
                 Choice('Назад', 'back'),
             ],
             style=STYLE,
-        ).ask()
+        ).unsafe_ask()
         if choice == 'push':
-            s.push(ask_int('Введите элемент'))
+            s.push(ask('Введите элемент', int))
         elif choice == 'pop':
             questionary.print(str(s.pop()))
         elif choice == 'peek':
@@ -183,4 +182,4 @@ if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
-        ...
+        questionary.print('Пока!', style='bold fg:ansigreen')

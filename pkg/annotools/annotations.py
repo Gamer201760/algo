@@ -4,9 +4,7 @@ from typing import (
     Annotated,
     Any,
     Iterable,
-    List,
     Sequence,
-    TypeVar,
     get_args,
     get_origin,
     get_type_hints,
@@ -14,18 +12,16 @@ from typing import (
 
 from pkg.annotools.validation import Validator
 
-V = TypeVar('V')
-
 
 @dataclass(frozen=True)
 class ParamInfo:
     name: str
-    base_type: Any  # list, dict, int, str, MyClass, ...
+    base_type: Any  # int, str, float, MyClass, ...
     args: tuple[Any, ...]  # параметры generic (для list[int] -> (int,))
-    metadata: List[Any]
+    metadata: list[Any]
 
 
-def _split_annotated(annotated_type: Any) -> tuple[Any, List[Any]]:
+def _split_annotated(annotated_type: Any) -> tuple[Any, list[Any]]:
     """Если тип Annotated[T, meta...], вернуть (T, [meta...]), иначе (тип, [])"""
     if get_origin(annotated_type) is Annotated:
         base_type, *meta = get_args(annotated_type)
@@ -37,13 +33,10 @@ def extract_annotaded(t: Any) -> tuple[Any, list]:
     base_type, metadata = _split_annotated(t)
 
     origin = get_origin(base_type)
-    # args = get_args(base_type)
     if origin is not None:
         base_type = origin
     return (
-        # name=name,
         base_type,
-        # args=args,
         metadata,
     )
 
