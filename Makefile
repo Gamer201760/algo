@@ -1,7 +1,4 @@
-.PHONY: test lint typecheck run pre-commit proto-gen fix-grpc-autogen
-PROTO_DIR := proto
-GEN_DIR := gen
-PROTO_FILES := $(shell find $(PROTO_DIR) -name '*.proto')
+.PHONY: test lint typecheck run pre-commit 
 
 help:
 	@echo "Доступные команды:"
@@ -26,8 +23,5 @@ lint:
 
 typecheck:
 	uv run mypy .
-
-fix-grpc-autogen:
-	./fix_grpc_autogen.sh $(GEN_DIR) $(GEN_DIR)
 
 pre-commit: lint typecheck test
