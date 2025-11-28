@@ -21,14 +21,12 @@ from pkg.annotools.validation import MinValue, TypeValidator
 
 
 class CLI:
-    """CLI с регистрацией хендлеров через __call__ и методом run()."""
-
     def __init__(self, style=STYLE) -> None:
         self._handlers: Dict[str, Callable[..., Any]] = {}
         self._style = style
 
     def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]:
-        """Регистрирует функцию как хендлер по её имени."""
+        """Регистрирует функцию как хендлер по её имени"""
         self._handlers[func.__name__] = func
         return func
 
@@ -37,7 +35,7 @@ class CLI:
         return self._handlers.copy()
 
     def _build_kwargs(self, func: Callable[..., Any]) -> dict[str, Any]:
-        """Сбор kwargs на основе аннотаций и метаданных Annotated."""
+        """Сбор kwargs на основе аннотаций и метаданных Annotated"""
         kwargs: dict[str, Any] = {}
 
         for info in iter_parameters(func):
@@ -66,7 +64,6 @@ class CLI:
         return kwargs
 
     def run(self) -> None:
-        """Главный цикл выбора и запуска хендлеров."""
         try:
             while True:
                 choice = questionary.select(
