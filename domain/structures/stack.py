@@ -1,3 +1,26 @@
+from typing import Protocol
+
+
+class StackProtocol(Protocol):
+    def push(self, x: int) -> None:
+        raise NotImplementedError
+
+    def pop(self) -> int:
+        raise NotImplementedError
+
+    def peek(self) -> int:
+        raise NotImplementedError
+
+    def is_empty(self) -> bool:
+        raise NotImplementedError
+
+    def __len__(self) -> int:
+        raise NotImplementedError
+
+    def min(self) -> int:
+        raise NotImplementedError
+
+
 class MinStack:
     def __init__(self) -> None:
         self._data: list[int] = []
