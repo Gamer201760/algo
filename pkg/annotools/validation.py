@@ -1,12 +1,14 @@
 from dataclasses import dataclass
 from typing import Callable, Protocol, runtime_checkable
 
+from pkg.annotools.metadata import MetaData
+
 
 class ValidationError(Exception): ...
 
 
 @runtime_checkable
-class Validator(Protocol):
+class Validator(MetaData, Protocol):
     def validate(self, value: str) -> None:
         """Выбрасывает ValidationError при ошибке"""
         raise NotImplementedError

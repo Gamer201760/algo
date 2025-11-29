@@ -19,21 +19,22 @@ def ask[T](
     return parser(raw)
 
 
+def ask_default[T](default: T, message: str) -> T | None:
+    use_default = questionary.confirm(
+        message,
+        default=True,
+        style=STYLE,
+    ).unsafe_ask()
+
+    if use_default:
+        return default
+
+
 def ask_array[T](
     parser: Callable[[str], T],
     *,
     validators: list[Validator] | None = None,
 ) -> list[T]:
-    use_default = questionary.confirm(
-        'Использовать тестовый массив [1, 3, -1, 2, -8, 7, 3, 5]?',
-        default=True,
-        style=STYLE,
-    ).ask()
-
-    if use_default:
-        sample = [1, 3, -1, 2, -8, 7, 3, 5]
-        return [parser(str(x)) for x in sample]
-
     raw = questionary.text(
         'Введите массив через пробел или запятую:',
         instruction='Например: 1 3 -1 2 8 7 3 5',
@@ -41,5 +42,5 @@ def ask_array[T](
         validate=validator_token_factory(validators),
     ).unsafe_ask()
 
-    tokens = raw.split(', ')
+    tokens = raw.replace(',', ' ').split()
     return [parser(t) for t in tokens]

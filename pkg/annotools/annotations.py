@@ -10,6 +10,7 @@ from typing import (
     get_type_hints,
 )
 
+from pkg.annotools.metadata import Message, MetaData
 from pkg.annotools.validation import Validator
 
 
@@ -18,7 +19,8 @@ class ParamInfo:
     name: str
     base_type: Any  # int, str, float, MyClass, ...
     args: tuple[Any, ...]  # параметры generic (для list[int] -> (int,))
-    metadata: list[Any]
+    metadata: list[MetaData]
+    default: Any = None
 
 
 def _split_annotated(annotated_type: Any) -> tuple[Any, list[Any]]:
@@ -49,7 +51,7 @@ def iter_parameters(func: Any) -> Iterable[ParamInfo]:
     hints = get_type_hints(func, include_extras=True)
     sig = inspect.signature(func)
 
-    for name in sig.parameters.keys():
+    for name, param in sig.parameters.items():
         if name not in hints:
             continue
 
@@ -60,13 +62,22 @@ def iter_parameters(func: Any) -> Iterable[ParamInfo]:
         if origin is not None:
             base_type = origin
 
+        default = None
+        if param.default is not inspect._empty:
+            default = param.default
+
         yield ParamInfo(
             name=name,
             base_type=base_type,
             args=args,
             metadata=metadata,
+            default=default,
         )
 
 
-def extract_validators(meta: Sequence[Any]) -> list[Validator]:
+def extract_validators(meta: Sequence[MetaData]) -> list[Validator]:
     return [m for m in meta if isinstance(m, Validator)]
+
+
+def extract_messages(meta: Sequence[MetaData]) -> list[Message]:
+    return [m for m in meta if isinstance(m, Message)]

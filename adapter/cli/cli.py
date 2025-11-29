@@ -3,9 +3,10 @@ from typing import Any, Callable
 import questionary
 from questionary import Choice, Separator
 
-from adapter.cli.ask import ask, ask_array
+from adapter.cli.ask import ask, ask_array, ask_default
 from adapter.cli.style import STYLE
 from pkg.annotools import extract_annotaded, extract_validators, iter_parameters
+from pkg.annotools.annotations import extract_messages
 
 
 class CLI:
@@ -27,6 +28,16 @@ class CLI:
         kwargs: dict[str, Any] = {}
 
         for info in iter_parameters(func):
+            for msg in extract_messages(info.metadata):
+                questionary.print(msg.msg(), style='bold fg:ansigreen')
+
+            if info.default is not None:
+                default = ask_default(
+                    info.default, f'Использовать {info.name} = {info.default}?'
+                )
+                if default is not None:
+                    kwargs[info.name] = default
+                    continue
             # list[T]
             if info.base_type is list:
                 if len(info.args) != 1:
