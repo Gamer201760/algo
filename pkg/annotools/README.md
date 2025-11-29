@@ -54,12 +54,9 @@ n: Annotated[
 `annotools` не ограничивается встроенными классами. Можно описывать свои метаданные, реализуя протоколы `MetaData`, `Validator` или используя `Message` как есть.
 
 ```
-from dataclasses import dataclass
-
 from annotools import ValidationError
 
 
-@dataclass(frozen=True)
 class NonEmpty:
     def validate(self, value: str) -> None:
         if not value.strip():
