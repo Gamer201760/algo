@@ -106,6 +106,7 @@ def radix(
             int,
             NumValidator(),
             TypeValidator(int),
+            MinValue(0),
         ]
     ] = [1, 3, 1, 2, 8, 7, 3, 5],
     base: Annotated[int, NumValidator(), TypeValidator(int), MinValue(1)] = 10,
@@ -140,7 +141,7 @@ def bucket(
     ] = [0.1, 0.3, 0.1, 0.321432, 0.231, 0.7, 0.12313, 0.2342],
     buckets: Annotated[
         int,
-        Message('bucket = -1 значит будет n бакетов'),
+        Message('buckets = -1 значит будет n бакетов'),
         TypeValidator(int),
         MinValue(1),
     ] = -1,
