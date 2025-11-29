@@ -1,6 +1,3 @@
-from functools import lru_cache
-
-
 def factorial(n: int) -> int:
     if n < 0:
         raise ValueError('Факториал поддерживает только положительные n')
@@ -12,15 +9,6 @@ def factorial(n: int) -> int:
 
 
 def factorial_recursive(n: int) -> int:
-    if n < 0:
-        raise ValueError('Факториал поддерживает только положительные n')
-    if n in (0, 1):
-        return 1
-    return n * factorial_recursive(n - 1)
-
-
-@lru_cache(None)
-def factorial_recursive_cache(n: int) -> int:
     if n < 0:
         raise ValueError('Факториал поддерживает только положительные n')
     if n in (0, 1):

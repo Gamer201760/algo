@@ -1,12 +1,7 @@
 import pytest
 
-from domain.algo.fib import fibo, fibo_recursive, fibo_recursive_cache
+from domain.algo.fib import fibo, fibo_recursive, 
 
-
-@pytest.fixture(autouse=True)
-def clear_fibo_cache():
-    fibo_recursive_cache.cache_clear()
-    yield
 
 
 @pytest.mark.benchmark(group='fibo-iter-vs-rec')
@@ -16,7 +11,6 @@ def clear_fibo_cache():
     [
         fibo,
         fibo_recursive,
-        fibo_recursive_cache,
     ],
 )
 def test_fibo_benchmark(benchmark, fn, n):
