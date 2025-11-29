@@ -1,6 +1,9 @@
+from adapter.cli import cli
+
+
 def main():
-    print("Hello from algopack!")
+    cli.run()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
