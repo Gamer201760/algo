@@ -1,3 +1,6 @@
+from functools import lru_cache
+
+
 def fibo(n: int) -> int:
     if n < 0:
         raise ValueError('Фибоначчи поддерживает только положительные n')
@@ -13,6 +16,7 @@ def fibo(n: int) -> int:
     return b
 
 
+@lru_cache(None)
 def fibo_recursive(n: int) -> int:
     if n < 0:
         raise ValueError('Фибоначчи поддерживает только положительные n')
